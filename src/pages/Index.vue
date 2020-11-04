@@ -12,6 +12,7 @@
             <q-icon name="fiber_manual_record" color="amber" size="4em" style="opacity: 0.4" />
             <q-icon name="fiber_manual_record" color="green" size="4em" />
             <p class="q-my-md text-green">Los rayos UV no afectan demasiado en tu zona</p>
+            <p class="q-my-md"><q-icon name="info" /> Más información</p>
           </div>
         </div>
       </div>
