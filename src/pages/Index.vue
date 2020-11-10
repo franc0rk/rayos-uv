@@ -30,8 +30,7 @@ export default {
     status: null,
     device: null,
     deviceData: null,
-    uvIndex: null,
-    con: null
+    uvIndex: null
   }),
   created () {
     if (window.bluetoothle) {
@@ -46,24 +45,11 @@ export default {
       // Get Connected Device
       window.bluetoothle.retrieveConnected(data => {
         this.device = data[0]
+        this.deviceConnection()
+        document.address = data[0].address
       }, err => {
         console.log(err)
       }, { services: ['180D', '180F'] })
-      // Connect Device
-      window.bluetoothle.connect(connectSuccess => {
-        this.con = connectSuccess
-      }, connectError => {
-        this.con = connectError
-      }, { address: 'F0:08:D1:D8:22:C2' })
-      // Get Connected Device
-      window.bluetoothle.discover(discoverSuccess => {
-        this.deviceData = discoverSuccess
-      }, discoverError => {
-        this.deviceData = discoverError
-      }, {
-        address: 'F0:08:D1:D8:22:C2',
-        clearCache: true
-      })
     }
   },
   methods: {
@@ -82,7 +68,17 @@ export default {
         this.uvIndex = subscribeError
       }, params)
     },
-
+    deviceConnection () {
+      const address = this.device.address.replace(/"/g, '')
+      window.bluetoothle.discover(discoverSuccess => {
+        this.deviceData = discoverSuccess
+      }, discoverError => {
+        this.deviceData = discoverError
+      }, {
+        address: address,
+        clearCache: true
+      })
+    },
     base64ToStr (str) {
       return Buffer.from(str, 'base64').toString('ascii')
     }
