@@ -5,9 +5,9 @@
         <q-btn color="accent" size="4em" round icon="flare" @click="getUv" />
         <div class="text-subtitle1 q-my-xs">Presiona para obtener índice de rayos UV</div>
         <div>
-          <h1 class="text-accent q-my-md">{{ 'Índice' }}</h1>
-          <pre>{{ 'Resultado suscripcion: ' + JSON.stringify(result) }}</pre>
-          <pre>{{ 'Dispositivos: ' + dispositivos }}</pre>
+          <h3 class="text-accent q-my-md">{{ base64ToStr(JSON.stringify(uvIndex)) }}</h3>
+          <pre>{{ 'Dispositivo: ' + JSON.stringify(device.name).replace(/"/g, '') }}</pre>
+          <pre class="cl"></pre>
 
           <!--semaphore-->
           <div>
@@ -27,55 +27,64 @@
 export default {
   name: 'PageIndex',
   data: () => ({
-    devices: [],
-    result: null,
-    dispositivos: null
+    status: null,
+    device: null,
+    deviceData: null,
+    uvIndex: null,
+    con: null
   }),
   created () {
     if (window.bluetoothle) {
+      // Bluetooth Init
       window.bluetoothle.initialize(result => {
-        console.log('result', result)
+        this.status = result
+      }, {
+        request: true,
+        statusReceiver: true,
+        restoreKey: 'bluetoothleplugin'
       })
-
-      window.bluetoothle.enable(data => {
-        console.log('data', data)
+      // Get Connected Device
+      window.bluetoothle.retrieveConnected(data => {
+        this.device = data[0]
       }, err => {
         console.log(err)
+      }, { services: ['180D', '180F'] })
+      // Connect Device
+      window.bluetoothle.connect(connectSuccess => {
+        this.con = connectSuccess
+      }, connectError => {
+        this.con = connectError
+      }, { address: 'F0:08:D1:D8:22:C2' })
+      // Get Connected Device
+      window.bluetoothle.discover(discoverSuccess => {
+        this.deviceData = discoverSuccess
+      }, discoverError => {
+        this.deviceData = discoverError
+      }, {
+        address: 'F0:08:D1:D8:22:C2',
+        clearCache: true
       })
-
-      window.bluetoothle.connect(data => {
-        console.log(data)
-      }, err => {
-        console.log(err)
-      }, { address: '283f04ce-fd1d-4db3-a74a-636b51dc4809' })
-
-      // bluetoothle.addService(success, error, params);
     }
   },
   methods: {
     getUv () {
-      window.bluetoothle.retrieveConnected(data => {
-        console.log(data)
-        this.dispositivos = data
-      }, err => {
-        console.log(err)
-      }, { services: ['180D', '180F'] })
+      const UUID = this.deviceData.services[2].uuid.replace(/"/g, '')
+      const address = this.device.address.replace(/"/g, '')
+      const params = { address: address, service: UUID, characteristic: UUID }
+      window.bluetoothle.unsubscribe(subscribeSuccess => {
+        this.uvIndex = subscribeSuccess.value
+      }, subscribeError => {
+        this.uvIndex = subscribeError
+      }, params)
+      window.bluetoothle.subscribe(subscribeSuccess => {
+        this.uvIndex = subscribeSuccess.value
+      }, subscribeError => {
+        this.uvIndex = subscribeError
+      }, params)
+    },
 
-      window.bluetoothle.subscribe(data => {
-        console.log(data)
-        this.result = data
-      }, err => {
-        console.log(err)
-        this.result = err
-      }, {
-        address: '283f04ce-fd1d-4db3-a74a-636b51dc4809',
-        service: '283f04ce-fd1d-4db3-a74a-636b51dc4809'
-      })
-      // window.bluetoothle.read(readSuccess, readError, {
-      //   "address": "ECC037FD-72AE-AFC5-9213-CA785B3B5C63",
-      //   "service": "180d",
-      //   "characteristic": "2a38"
-      // });
+    base64ToStr (str) {
+      return Buffer.from(str, 'base64').toString('ascii')
     }
   }
 }
