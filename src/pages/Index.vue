@@ -34,7 +34,7 @@ export default {
     uvIndex: null,
     connectionStatus: null
   }),
-  mounted () {
+  created () {
     if (window.bluetoothle) {
       // Bluetooth Init
       window.bluetoothle.initialize(resp => {
