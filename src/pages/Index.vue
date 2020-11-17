@@ -2,12 +2,13 @@
   <q-page class="row">
     <div class="col q-my-lg">
       <div class="text-center">
-        <q-btn color="accent" size="4em" round icon="flare" @click="getUv" />
+        <q-btn color="accent" size="4em" round icon="flare" @click="uvStream" />
         <div class="text-subtitle1 q-my-xs">Presiona para obtener índice de rayos UV</div>
         <div>
-          <h1 class="text-accent q-my-md">{{ 'Índice' }}</h1>
-          <pre>{{ 'Resultado suscripcion: ' + JSON.stringify(result) }}</pre>
-          <pre>{{ 'Dispositivos: ' + dispositivos }}</pre>
+          <h3 class="text-accent q-my-md">{{ base64ToStr(JSON.stringify(uvIndex)) }}</h3>
+          <pre>{{ 'Dispositivo: ' + JSON.stringify(device.name).replace(/"/g, '') }}</pre>
+          <pre>{{ 'Dispositivo: ' + JSON.stringify(deviceData).replace(/"/g, '') }}</pre>
+          <pre class="cl"></pre>
 
           <!--semaphore-->
           <div>
@@ -27,55 +28,77 @@
 export default {
   name: 'PageIndex',
   data: () => ({
-    devices: [],
-    result: null,
-    dispositivos: null
+    status: null,
+    device: null,
+    deviceData: null,
+    uvIndex: null,
+    connectionStatus: null
   }),
   created () {
     if (window.bluetoothle) {
-      window.bluetoothle.initialize(result => {
-        console.log('result', result)
+      // Bluetooth Init
+      window.bluetoothle.initialize(resp => {
+        this.status = resp
+      }, {
+        request: true,
+        statusReceiver: true,
+        restoreKey: 'bluetoothleplugin'
       })
-
-      window.bluetoothle.enable(data => {
-        console.log('data', data)
-      }, err => {
-        console.log(err)
-      })
-
-      window.bluetoothle.connect(data => {
-        console.log(data)
-      }, err => {
-        console.log(err)
-      }, { address: '283f04ce-fd1d-4db3-a74a-636b51dc4809' })
-
-      // bluetoothle.addService(success, error, params);
-    }
-  },
-  methods: {
-    getUv () {
+      // Get Connected Device
       window.bluetoothle.retrieveConnected(data => {
-        console.log(data)
-        this.dispositivos = data
+        this.device = data[0]
       }, err => {
         console.log(err)
       }, { services: ['180D', '180F'] })
-
-      window.bluetoothle.subscribe(data => {
-        console.log(data)
-        this.result = data
-      }, err => {
-        console.log(err)
-        this.result = err
-      }, {
-        address: '283f04ce-fd1d-4db3-a74a-636b51dc4809',
-        service: '283f04ce-fd1d-4db3-a74a-636b51dc4809'
-      })
-      // window.bluetoothle.read(readSuccess, readError, {
-      //   "address": "ECC037FD-72AE-AFC5-9213-CA785B3B5C63",
-      //   "service": "180d",
-      //   "characteristic": "2a38"
-      // });
+      // Connect Device
+      window.bluetoothle.connect(connectSuccess => {
+        this.connectionStatus = connectSuccess
+      }, connectError => {
+        this.connectionStatus = connectError
+      }, { address: 'F0:08:D1:D8:22:C2' })
+      // Get Connected Device
+      window.bluetoothle.discover(discoverSuccess => {
+        this.deviceData = discoverSuccess
+        this.uvStream()
+      }, discoverError => {
+        this.deviceData = discoverError
+      }, { address: 'F0:08:D1:D8:22:C2', clearCache: true })
+    }
+  },
+  unmounted () {
+    const UUID = this.deviceData.services[2].uuid.replace(/"/g, '')
+    const address = this.device.address.replace(/"/g, '')
+    const params = { address: address, service: UUID, characteristic: UUID }
+    window.bluetoothle.unsubscribe(subscribeSuccess => {
+      this.uvIndex = subscribeSuccess.value
+    }, subscribeError => {
+      this.uvIndex = subscribeError
+    }, params)
+    // Disconnect Device
+    window.bluetoothle.disconnect(disconnectSuccess => {
+      this.connectionStatus = disconnectSuccess
+    }, disconnectError => {
+      this.connectionStatus = disconnectError
+    }, { address: 'F0:08:D1:D8:22:C2' })
+  },
+  methods: {
+    uvStream () {
+      const UUID = this.deviceData.services[2].uuid.replace(/"/g, '')
+      const address = this.device.address.replace(/"/g, '')
+      const params = { address: address, service: UUID, characteristic: UUID }
+      window.bluetoothle.unsubscribe(subscribeSuccess => {
+        this.uvIndex = subscribeSuccess.value
+      }, subscribeError => {
+        this.uvIndex = subscribeError
+      }, params)
+      window.bluetoothle.subscribe(subscribeSuccess => {
+        this.uvIndex = subscribeSuccess.value
+      }, subscribeError => {
+        this.uvIndex = subscribeError
+      }, params)
+    },
+    base64ToStr (str) {
+      return Buffer.from(str, 'base64').toString('ascii')
     }
   }
 }
