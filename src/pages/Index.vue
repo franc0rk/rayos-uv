@@ -93,17 +93,28 @@ export default {
       }, params)
       window.bluetoothle.subscribe(subscribeSuccess => {
         this.uvIndex = subscribeSuccess.value
-        this.saveQuery(this.uvIndex)
+        this.saveQuery(this.base64ToStr(JSON.stringify(this.uvIndex)))
       }, subscribeError => {
         this.uvIndex = subscribeError
       }, params)
     },
     saveQuery (value) {
+      const userId = localStorage.getItem('userId')
+      let level = 'bajo'
+
+      if (value >= 5 && level <= 7) {
+        level = 'medio'
+      }
+
+      if (value > 7) {
+        level = 'alto'
+      }
+
       this.$axios.post('https://uv-api.herokuapp.com/consultas', {
         uv_index: value,
-        role: 'low',
+        role: level,
         date: new Date(),
-        user_id: 1
+        user_id: userId
       }).then(data => {
         console.log(data)
       }).catch(err => {

@@ -36,6 +36,7 @@ export default {
               color: 'positive'
             })
             this.$router.push('/')
+            localStorage.setItem('userId', response.data.userid)
           }
         })
         .catch(err => {
