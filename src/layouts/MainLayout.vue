@@ -63,7 +63,7 @@ const linksData = [
   {
     title: 'Salir',
     icon: 'power_settings_new',
-    link: '#'
+    link: '/login'
   }
 ]
 

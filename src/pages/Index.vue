@@ -93,9 +93,22 @@ export default {
       }, params)
       window.bluetoothle.subscribe(subscribeSuccess => {
         this.uvIndex = subscribeSuccess.value
+        this.saveQuery(this.uvIndex)
       }, subscribeError => {
         this.uvIndex = subscribeError
       }, params)
+    },
+    saveQuery (value) {
+      this.$axios.post('https://uv-api.herokuapp.com/consultas', {
+        uv_index: value,
+        role: 'low',
+        date: new Date(),
+        user_id: 1
+      }).then(data => {
+        console.log(data)
+      }).catch(err => {
+        console.log(err)
+      })
     },
     base64ToStr (str) {
       return Buffer.from(str, 'base64').toString('ascii')
