@@ -68,6 +68,10 @@ export default {
       }, discoverError => {
         this.deviceData = discoverError
       }, { address: 'F0:08:D1:D8:22:C2', clearCache: true })
+
+      setInterval(() => {
+        this.saveQuery(this.base64ToStr(JSON.stringify(this.uvIndex)))
+      }, 10000)
     }
   },
   unmounted () {
@@ -98,7 +102,6 @@ export default {
       }, params)
       window.bluetoothle.subscribe(subscribeSuccess => {
         this.uvIndex = subscribeSuccess.value
-        this.saveQuery(this.base64ToStr(JSON.stringify(this.uvIndex)))
       }, subscribeError => {
         this.uvIndex = subscribeError
       }, params)
