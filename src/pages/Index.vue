@@ -35,6 +35,11 @@ export default {
     connectionStatus: null
   }),
   created () {
+    // logout if not authenticated user
+    if (!localStorage.getItem('userId')) {
+      this.$router.push('/login')
+    }
+
     if (window.bluetoothle) {
       // Bluetooth Init
       window.bluetoothle.initialize(resp => {
