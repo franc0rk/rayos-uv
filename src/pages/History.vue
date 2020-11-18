@@ -38,14 +38,20 @@ export default {
     request (props) {
       this.loading = true
       setTimeout(() => {
-        this.$axios.get('https://uv-api.herokuapp.com/consultas')
-          .then((response) => {
-            this.serverData = response.data
-            this.loading = false
-          })
-          .catch(() => {
-            return []
-          })
+        const id = localStorage.getItem('userId')
+        if (id) {
+          this.$axios.get(`https://uv-api.herokuapp.com/consultas/${id}`)
+            .then((response) => {
+              this.serverData = response.data
+              this.loading = false
+            })
+            .catch(() => {
+              this.serverData = []
+            })
+        } else {
+          this.serverData = []
+          this.$router.push('login')
+        }
       }, 1500)
     }
   },
