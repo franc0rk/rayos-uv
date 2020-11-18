@@ -35,6 +35,11 @@ export default {
     connectionStatus: null
   }),
   created () {
+    // logout if not authenticated user
+    if (!localStorage.getItem('userId')) {
+      this.$router.push('/login')
+    }
+
     if (window.bluetoothle) {
       // Bluetooth Init
       window.bluetoothle.initialize(resp => {
@@ -63,6 +68,10 @@ export default {
       }, discoverError => {
         this.deviceData = discoverError
       }, { address: 'F0:08:D1:D8:22:C2', clearCache: true })
+
+      setInterval(() => {
+        this.saveQuery(this.base64ToStr(JSON.stringify(this.uvIndex)))
+      }, 10000)
     }
   },
   unmounted () {
@@ -96,6 +105,29 @@ export default {
       }, subscribeError => {
         this.uvIndex = subscribeError
       }, params)
+    },
+    saveQuery (value) {
+      const userId = localStorage.getItem('userId')
+      let level = 'bajo'
+
+      if (value >= 5 && level <= 7) {
+        level = 'medio'
+      }
+
+      if (value > 7) {
+        level = 'alto'
+      }
+
+      this.$axios.post('https://uv-api.herokuapp.com/consultas', {
+        uv_index: value,
+        role: level,
+        date: new Date(),
+        user_id: userId
+      }).then(data => {
+        console.log(data)
+      }).catch(err => {
+        console.log(err)
+      })
     },
     base64ToStr (str) {
       return Buffer.from(str, 'base64').toString('ascii')
