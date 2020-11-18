@@ -56,6 +56,11 @@ const linksData = [
     link: '/info'
   },
   {
+    title: 'Historial',
+    icon: 'info',
+    link: '/history'
+  },
+  {
     title: 'Ayuda',
     icon: 'help_outline',
     link: '/help'
