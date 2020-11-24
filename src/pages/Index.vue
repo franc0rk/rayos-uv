@@ -6,17 +6,19 @@
         <div class="text-subtitle1 q-my-xs">Presiona para obtener índice de rayos UV</div>
         <div>
           <h3 class="text-accent q-my-md">{{ base64ToStr(JSON.stringify(uvIndex)) }}</h3>
-          <pre>{{ 'Dispositivo: ' + JSON.stringify(device.name).replace(/"/g, '') }}</pre>
+          <pre v-if="device">{{ 'Dispositivo: ' + JSON.stringify(device.name).replace(/"/g, '') }}</pre>
           <pre>{{ 'Dispositivo: ' + JSON.stringify(deviceData).replace(/"/g, '') }}</pre>
           <pre class="cl"></pre>
 
           <!--semaphore-->
           <div>
-            <q-icon name="fiber_manual_record" color="red" size="4em" style="opacity: 0.4" />
-            <q-icon name="fiber_manual_record" color="amber" size="4em" style="opacity: 0.4" />
-            <q-icon name="fiber_manual_record" color="green" size="4em" />
-            <p class="q-my-md text-green">Los rayos UV no afectan demasiado en tu zona</p>
-            <p class="q-my-md"><q-icon name="info" /> Más información</p>
+            <q-icon name="fiber_manual_record" color="red" size="4em" :style="level === 'alto' ? 'opacity: 1' : 'opacity: 0.4'" />
+            <q-icon name="fiber_manual_record" color="amber" size="4em" :style="level === 'medio' ? 'opacity: 1' : 'opacity: 0.4'" />
+            <q-icon name="fiber_manual_record" color="green" size="4em" :style="level === 'bajo' ? 'opacity: 1' : 'opacity: 0.4'" />
+            <p class="q-my-md" :class="texts[level]">Nivel de rayos uv: {{ level }}</p>
+            <p class="q-my-md">
+              <q-btn to="/info" color="accent" flat label="Más información" icon="info" />
+            </p>
           </div>
         </div>
       </div>
@@ -32,14 +34,19 @@ export default {
     device: null,
     deviceData: null,
     uvIndex: null,
-    connectionStatus: null
+    connectionStatus: null,
+    level: null,
+    texts: {
+      bajo: 'green',
+      medio: 'amber',
+      alto: 'red'
+    }
   }),
   created () {
     // logout if not authenticated user
-    if (!localStorage.getItem('userId')) {
-      this.$router.push('/login')
-    }
-
+    // if (!localStorage.getItem('userId')) {
+    //   this.$router.push('/login')
+    // }
     if (window.bluetoothle) {
       // Bluetooth Init
       window.bluetoothle.initialize(resp => {
@@ -117,6 +124,8 @@ export default {
       if (value > 7) {
         level = 'alto'
       }
+
+      this.level = level
 
       this.$axios.post('https://uv-api.herokuapp.com/consultas', {
         uv_index: value,
